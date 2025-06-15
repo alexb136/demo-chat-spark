@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,7 +54,7 @@ const Index = () => {
 
     // Action B: Send to webhook
     try {
-      const response = await fetch('https://burtsevtest.app.n8n.cloud/webhook/aichatdemo', {
+      const response = await fetch('https://burtsevtest.app.n8n.cloud/webhook/gemini-webhook', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
