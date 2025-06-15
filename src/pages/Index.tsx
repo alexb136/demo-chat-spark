@@ -55,7 +55,7 @@ const Index = () => {
 
     // Action B: Send to webhook
     try {
-      const response = await fetch('https://webhook.site/e9e6a2f8-a1b7-4a0b-9b4e-2f9a2d7f8c0a', {
+      const response = await fetch('https://burtsevtest.app.n8n.cloud/webhook/aichatdemo', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
