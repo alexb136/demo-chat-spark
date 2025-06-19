@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +42,7 @@ const Index = () => {
     const messageText = inputValue.trim();
     setIsLoading(true);
 
-    // Action A: Add message to chat history instantly
+    // Action A: Add customer message to chat history instantly
     const newMessage: Message = {
       id: Date.now().toString(),
       text: messageText,
@@ -52,7 +53,16 @@ const Index = () => {
     setMessages(prev => [...prev, newMessage]);
     setInputValue('');
 
-    // Action B: Send to webhook
+    // Add typing indicator
+    const typingMessage: Message = {
+      id: 'typing',
+      text: "AI is typing...",
+      type: 'creator',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, typingMessage]);
+
+    // Action B: Send to webhook and process response
     try {
       const response = await fetch('https://burtsevtest.app.n8n.cloud/webhook/aichatdemo', {
         method: 'POST',
@@ -64,17 +74,68 @@ const Index = () => {
         }),
       });
 
-      console.log('Webhook response:', response.status);
-      
-      toast({
-        title: "Message sent",
-        description: "Your message has been processed successfully.",
-      });
+      console.log('Webhook response status:', response.status);
+
+      if (response.ok) {
+        let responseMessage = '';
+        
+        try {
+          // Try to parse as JSON first
+          const responseData = await response.json();
+          console.log('Webhook response data:', responseData);
+          
+          // Extract message from various possible JSON structures
+          if (responseData.response) {
+            responseMessage = responseData.response;
+          } else if (responseData.message) {
+            responseMessage = responseData.message;
+          } else if (responseData.text) {
+            responseMessage = responseData.text;
+          } else if (typeof responseData === 'string') {
+            responseMessage = responseData;
+          } else {
+            responseMessage = JSON.stringify(responseData);
+          }
+        } catch (jsonError) {
+          // If JSON parsing fails, treat as plain text
+          console.log('Response is not JSON, treating as plain text');
+          responseMessage = await response.text();
+        }
+
+        // Remove typing indicator and add actual response
+        setMessages(prev => {
+          const withoutTyping = prev.filter(msg => msg.id !== 'typing');
+          return [...withoutTyping, {
+            id: (Date.now() + 1).toString(),
+            text: responseMessage || 'No response received',
+            type: 'creator',
+            timestamp: new Date()
+          }];
+        });
+
+        toast({
+          title: "Response received",
+          description: "AI has responded to your message.",
+        });
+      } else {
+        // Remove typing indicator on error
+        setMessages(prev => prev.filter(msg => msg.id !== 'typing'));
+        
+        toast({
+          title: "Webhook Error",
+          description: `Server responded with status ${response.status}`,
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Webhook error:', error);
+      
+      // Remove typing indicator on error
+      setMessages(prev => prev.filter(msg => msg.id !== 'typing'));
+      
       toast({
-        title: "Warning",
-        description: "Message displayed but webhook call failed.",
+        title: "Connection Error",
+        description: "Failed to connect to the webhook. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -111,18 +172,22 @@ const Index = () => {
                   className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg shadow-sm ${
                     message.type === 'customer'
                       ? 'bg-blue-500 text-white rounded-br-none'
+                      : message.id === 'typing'
+                      ? 'bg-gray-300 text-gray-600 border border-gray-200 rounded-bl-none animate-pulse'
                       : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'
                   }`}
                 >
                   <p className="text-sm leading-relaxed">{message.text}</p>
-                  <p className={`text-xs mt-1 ${
-                    message.type === 'customer' ? 'text-blue-100' : 'text-gray-500'
-                  }`}>
-                    {message.timestamp.toLocaleTimeString([], { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </p>
+                  {message.id !== 'typing' && (
+                    <p className={`text-xs mt-1 ${
+                      message.type === 'customer' ? 'text-blue-100' : 'text-gray-500'
+                    }`}>
+                      {message.timestamp.toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
