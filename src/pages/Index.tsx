@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,11 +83,11 @@ const Index = () => {
           const responseData = await response.json();
           console.log('Webhook response data:', responseData);
           
-          // Extract message from various possible JSON structures
-          if (responseData.response) {
-            responseMessage = responseData.response;
-          } else if (responseData.message) {
+          // Extract message from the expected response format
+          if (responseData.message) {
             responseMessage = responseData.message;
+          } else if (responseData.response) {
+            responseMessage = responseData.response;
           } else if (responseData.text) {
             responseMessage = responseData.text;
           } else if (typeof responseData === 'string') {
