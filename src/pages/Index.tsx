@@ -63,7 +63,7 @@ const Index = () => {
 
     // Action B: Send to webhook and process response
     try {
-      const response = await fetch('https://burtsevtest.app.n8n.cloud/webhook/aichatdemo', {
+      const response = await fetch('https://burtsevtest.app.n8n.cloud/webhook-test/aichatdemo', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
