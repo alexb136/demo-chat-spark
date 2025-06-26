@@ -69,7 +69,7 @@ const Index = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messageText: messageText
+          message: messageText
         }),
       });
 
