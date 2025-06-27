@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,13 +64,13 @@ const Index = () => {
 
     // Action B: Send to webhook and process response
     try {
-      const response = await fetch('https://n8n.mjdraperiesandinteriors.com/webhook-test/aichatdemo', {
+      const response = await fetch('https://n8n.mjdraperiesandinteriors.com/webhook/aichatdemo', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: messageText
+          messageText: messageText
         }),
       });
 
