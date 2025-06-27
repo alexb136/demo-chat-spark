@@ -63,6 +63,8 @@ const Index = () => {
 
     // Action B: Send to webhook and process response
     try {
+      console.log('Sending request to webhook with:', { messageText });
+      
       const response = await fetch('https://n8n.mjdraperiesandinteriors.com/webhook/aichatdemo', {
         method: 'POST',
         headers: {
@@ -74,30 +76,37 @@ const Index = () => {
       });
 
       console.log('Webhook response status:', response.status);
+      console.log('Webhook response headers:', response.headers);
 
       if (response.ok) {
         const responseData = await response.json();
-        console.log('Webhook response data:', responseData);
+        console.log('Full webhook response data:', responseData);
+        console.log('Message field from response:', responseData.message);
+        console.log('Type of message field:', typeof responseData.message);
         
         // Extract the actual message from the response
-        const actualMessage = responseData.message || 'No message received';
+        const actualMessage = responseData.message || responseData.text || responseData.response || 'No message received from webhook';
+        console.log('Actual message to display:', actualMessage);
 
         // Remove typing indicator and add actual response
         setMessages(prev => {
           const withoutTyping = prev.filter(msg => msg.id !== 'typing');
-          return [...withoutTyping, {
+          const newResponse = {
             id: (Date.now() + 1).toString(),
             text: actualMessage,
-            type: 'creator',
+            type: 'creator' as const,
             timestamp: new Date()
-          }];
+          };
+          console.log('Adding new response message:', newResponse);
+          return [...withoutTyping, newResponse];
         });
 
         toast({
           title: "Response received",
-          description: "AI has responded to your message.",
+          description: `Received: ${actualMessage}`,
         });
       } else {
+        console.error('Webhook responded with error status:', response.status);
         // Remove typing indicator on error
         setMessages(prev => prev.filter(msg => msg.id !== 'typing'));
         
