@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,37 +76,18 @@ const Index = () => {
       console.log('Webhook response status:', response.status);
 
       if (response.ok) {
-        let responseMessage = '';
+        const responseData = await response.json();
+        console.log('Webhook response data:', responseData);
         
-        try {
-          // Try to parse as JSON first
-          const responseData = await response.json();
-          console.log('Webhook response data:', responseData);
-          
-          // Extract message from the expected response format
-          if (responseData.message) {
-            responseMessage = responseData.message;
-          } else if (responseData.response) {
-            responseMessage = responseData.response;
-          } else if (responseData.text) {
-            responseMessage = responseData.text;
-          } else if (typeof responseData === 'string') {
-            responseMessage = responseData;
-          } else {
-            responseMessage = JSON.stringify(responseData);
-          }
-        } catch (jsonError) {
-          // If JSON parsing fails, treat as plain text
-          console.log('Response is not JSON, treating as plain text');
-          responseMessage = await response.text();
-        }
+        // Extract the actual message from the response
+        const actualMessage = responseData.message || 'No message received';
 
         // Remove typing indicator and add actual response
         setMessages(prev => {
           const withoutTyping = prev.filter(msg => msg.id !== 'typing');
           return [...withoutTyping, {
             id: (Date.now() + 1).toString(),
-            text: responseMessage || 'No response received',
+            text: actualMessage,
             type: 'creator',
             timestamp: new Date()
           }];
