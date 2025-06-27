@@ -86,18 +86,25 @@ const Index = () => {
         console.log('Response data type:', Array.isArray(responseData) ? 'array' : typeof responseData);
         
         // Extract the actual message from the n8n webhook response
-        // Your webhook returns: [{"text": "actual AI response"}]
+        // Your webhook now returns: [{"text": "actual AI response"}]
         let actualMessage = 'No message received from webhook';
         
-        if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].text) {
-          actualMessage = responseData[0].text;
-          console.log('Extracted message from array:', actualMessage);
-        } else if (responseData.message && responseData.message !== 'Workflow was started') {
+        // Check if it's an array with text field first
+        if (Array.isArray(responseData) && responseData.length > 0) {
+          if (responseData[0].text) {
+            actualMessage = responseData[0].text;
+            console.log('Extracted message from array[0].text:', actualMessage);
+          }
+        }
+        // Fallback to direct text field
+        else if (responseData.text) {
+          actualMessage = responseData.text;
+          console.log('Extracted message from direct text field:', actualMessage);
+        }
+        // Fallback to message field (excluding workflow started message)
+        else if (responseData.message && responseData.message !== 'Workflow was started') {
           actualMessage = responseData.message;
           console.log('Extracted message from message field:', actualMessage);
-        } else if (responseData.text) {
-          actualMessage = responseData.text;
-          console.log('Extracted message from text field:', actualMessage);
         }
         
         console.log('Final message to display:', actualMessage);
