@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +24,6 @@ const Index = () => {
   const chatHistoryRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Auto-scroll to bottom when new messages are added
   useEffect(() => {
     if (chatHistoryRef.current) {
       chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
@@ -35,15 +32,11 @@ const Index = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!inputValue.trim()) {
-      return;
-    }
+    if (!inputValue.trim()) return;
 
     const messageText = inputValue.trim();
     setIsLoading(true);
 
-    // Action A: Add customer message to chat history instantly
     const newMessage: Message = {
       id: Date.now().toString(),
       text: messageText,
@@ -54,7 +47,6 @@ const Index = () => {
     setMessages(prev => [...prev, newMessage]);
     setInputValue('');
 
-    // Add typing indicator
     const typingMessage: Message = {
       id: 'typing',
       text: "AI is typing...",
@@ -63,63 +55,30 @@ const Index = () => {
     };
     setMessages(prev => [...prev, typingMessage]);
 
-    // Action B: Send to webhook and process response
     try {
-      console.log('Sending request to webhook with:', { messageText });
-      
       const response = await fetch('https://n8n.mjdraperiesandinteriors.com/webhook/aichatdemo', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messageText: messageText
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageText }),
       });
-
-      console.log('Webhook response status:', response.status);
-      console.log('Webhook response headers:', response.headers);
 
       if (response.ok) {
         const responseData = await response.json();
-        console.log('Full webhook response data:', responseData);
-        console.log('Response data type:', Array.isArray(responseData) ? 'array' : typeof responseData);
-        
-        // Extract the actual message from the n8n webhook response
-        // Your webhook now returns: [{"text": "actual AI response"}]
-        let actualMessage = 'No message received from webhook';
-        
-        // Check if it's an array with text field first
-        if (Array.isArray(responseData) && responseData.length > 0) {
-          if (responseData[0].text) {
-            actualMessage = responseData[0].text;
-            console.log('Extracted message from array[0].text:', actualMessage);
-          }
-        }
-        // Fallback to direct text field
-        else if (responseData.text) {
-          actualMessage = responseData.text;
-          console.log('Extracted message from direct text field:', actualMessage);
-        }
-        // Fallback to message field (excluding workflow started message)
-        else if (responseData.message && responseData.message !== 'Workflow was started') {
-          actualMessage = responseData.message;
-          console.log('Extracted message from message field:', actualMessage);
-        }
-        
-        console.log('Final message to display:', actualMessage);
 
-        // Remove typing indicator and add actual response
+        // ✅ Final extraction based on expected webhook output
+        let actualMessage = responseData?.message || 'No message received from webhook';
+
         setMessages(prev => {
           const withoutTyping = prev.filter(msg => msg.id !== 'typing');
-          const newResponse = {
-            id: (Date.now() + 1).toString(),
-            text: actualMessage,
-            type: 'creator' as const,
-            timestamp: new Date()
-          };
-          console.log('Adding new response message:', newResponse);
-          return [...withoutTyping, newResponse];
+          return [
+            ...withoutTyping,
+            {
+              id: (Date.now() + 1).toString(),
+              text: actualMessage,
+              type: 'creator',
+              timestamp: new Date()
+            }
+          ];
         });
 
         toast({
@@ -127,10 +86,7 @@ const Index = () => {
           description: `Received: ${actualMessage}`,
         });
       } else {
-        console.error('Webhook responded with error status:', response.status);
-        // Remove typing indicator on error
         setMessages(prev => prev.filter(msg => msg.id !== 'typing'));
-        
         toast({
           title: "Webhook Error",
           description: `Server responded with status ${response.status}`,
@@ -139,10 +95,7 @@ const Index = () => {
       }
     } catch (error) {
       console.error('Webhook error:', error);
-      
-      // Remove typing indicator on error
       setMessages(prev => prev.filter(msg => msg.id !== 'typing'));
-      
       toast({
         title: "Connection Error",
         description: "Failed to connect to the webhook. Please try again.",
@@ -158,16 +111,12 @@ const Index = () => {
       <div className="w-full max-w-[700px] bg-white rounded-lg shadow-lg overflow-hidden">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 p-6 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Customer Chat Simulator
-          </h1>
-          <h3 className="text-lg text-gray-600 font-medium">
-            Demo Environment
-          </h3>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Customer Chat Simulator</h1>
+          <h3 className="text-lg text-gray-600 font-medium">Demo Environment</h3>
         </div>
 
-        {/* Chat History Area */}
-        <div 
+        {/* Chat History */}
+        <div
           ref={chatHistoryRef}
           className="h-[450px] bg-gray-50 border-2 border-gray-200 p-4 overflow-y-auto"
           style={{ backgroundColor: '#f5f5f5' }}
@@ -192,9 +141,9 @@ const Index = () => {
                     <p className={`text-xs mt-1 ${
                       message.type === 'customer' ? 'text-blue-100' : 'text-gray-500'
                     }`}>
-                      {message.timestamp.toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
+                      {message.timestamp.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
                       })}
                     </p>
                   )}
@@ -204,7 +153,7 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Message Input Section */}
+        {/* Input Form */}
         <div className="bg-white border-t border-gray-200 p-4">
           <form onSubmit={handleSendMessage} className="flex gap-3">
             <Input
@@ -215,8 +164,8 @@ const Index = () => {
               className="flex-1 h-12 text-base"
               disabled={isLoading}
             />
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="h-12 px-6 bg-blue-500 hover:bg-blue-600 text-white font-medium"
               disabled={isLoading || !inputValue.trim()}
             >
