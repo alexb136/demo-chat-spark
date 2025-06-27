@@ -49,7 +49,7 @@ const Index = () => {
 
     const typingMessage: Message = {
       id: 'typing',
-      text: "AI is typing...",
+      text: "Typing...",
       type: 'creator',
       timestamp: new Date()
     };
