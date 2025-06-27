@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,10 +83,21 @@ const Index = () => {
         const responseData = await response.json();
         console.log('Full webhook response data:', responseData);
         console.log('Message field from response:', responseData.message);
+        console.log('Status field from response:', responseData.status);
         console.log('Type of message field:', typeof responseData.message);
         
-        // Extract the actual message from the response
-        const actualMessage = responseData.message || responseData.text || responseData.response || 'No message received from webhook';
+        // Extract the actual message from the n8n webhook response
+        // Your webhook returns: {"message": "actual AI response", "status": "sent"}
+        let actualMessage = 'No message received from webhook';
+        
+        if (responseData.message && responseData.message !== 'Workflow was started') {
+          actualMessage = responseData.message;
+        } else if (responseData.text) {
+          actualMessage = responseData.text;
+        } else if (responseData.response) {
+          actualMessage = responseData.response;
+        }
+        
         console.log('Actual message to display:', actualMessage);
 
         // Remove typing indicator and add actual response
